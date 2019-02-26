@@ -1,0 +1,61 @@
+<?php
+
+/**
+ * @file
+ * Install and update functions for the Statistics module.
+ */
+
+/**
+ * Implements hook_uninstall().
+ */
+function statistics_uninstall() {
+  $state = \Drupal::state();
+  $entity_type_manager = \Drupal::entityTypeManager();
+  $statistic_storage = \Drupal::service('statistics.storage');
+  $state->delete('statistics.day_timestamp');
+  $entity_types = \Drupal::configFactory()->get('statistics.settings')->get('entity_type_ids');
+  foreach (array_keys($entity_types) as $entity_type_id) {
+    $state->delete("statistics.{$entity_type_id}_counter_scale");
+    $statistic_storage->dropTable($entity_type_manager->getDefinition($entity_type_id));
+  }
+}
+
+/** Disable the Statistics module if the node module is not enabled.
+ */
+function statistics_update_8001() {
+  if (!\Drupal::moduleHandler()->moduleExists('node')) {
+    if (\Drupal::service('module_installer')->uninstall(['statistics'], TRUE)) {
+      return 'The statistics module depends on the node module and has therefore been uninstalled.';
+    }
+    else {
+      return 'There was an error uninstalling the statistcs module.';
+    }
+  }
+}
+
+/**
+ * Disable the Statistics module if the node module is not enabled.
+ */
+function statistics_update_8002() {
+  // Set the new configuration setting for max age to the initial value.
+  \Drupal::configFactory()->getEditable('statistics.settings')->set('display_max_age', 3600)->save();
+}
+
+/**
+ * Remove access_log settings.
+ */
+function statistics_update_8300() {
+  \Drupal::configFactory()->getEditable('statistics.settings')->clear('access_log')->save();
+}
+
+/**
+ * Replace count_content_views settings with entity_type_ids setting.
+ */
+function statistics_update_8301() {
+  $config = \Drupal::configFactory()->getEditable('statistics.settings');
+  $value = $config->get('count_content_views') ? ['node' => 'node'] : [];
+  // Remove the old count_content_views configuration setting.
+  $config->clear('count_content_views')
+  // Set the new configuration setting for entity_type_ids to the initial value.
+    ->set('entity_type_ids', $value)->save();
+}

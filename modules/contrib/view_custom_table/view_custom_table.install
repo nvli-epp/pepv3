@@ -1,0 +1,87 @@
+<?php
+
+/**
+ * @file
+ * Installation functions for the View Custom Table module.
+ */
+
+use Drupal\Core\Database\Database;
+
+/**
+ * Implements hook_schema().
+ */
+function view_custom_table_schema() {
+  $schema['custom_table_view_data'] = [
+    'description' => 'Keep the records of custom tables added in views.',
+    'fields' => [
+      'id' => [
+        'description' => 'Primary id for the table.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'table_name' => [
+        'description' => 'Table name which needs to add to views.',
+        'type' => 'varchar',
+        'length' => 100,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'table_database' => [
+        'description' => 'Database of the table.',
+        'type' => 'varchar',
+        'length' => 100,
+        'not null' => TRUE,
+        'default' => 'default',
+      ],
+      'description' => [
+        'description' => 'Table description for a quick idea of, what this table for.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'column_relations' => [
+        'description' => 'Custom table relation with drupal core entities.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'created_by' => [
+        'description' => 'Relation to the user who has created this entry.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 1,
+      ],
+    ],
+    'indexes' => [
+      'table_name' => [
+        'table_name',
+      ],
+      'description' => [
+        'description',
+      ],
+    ],
+    'primary key' => [
+      'id',
+    ],
+  ];
+
+  return $schema;
+}
+
+/**
+ * Add 'table_database' column so tables from other database can be implemented.
+ */
+function view_custom_table_update_8101() {
+  $table_database = [
+    'description' => 'Database of the table.',
+    'type' => 'varchar',
+    'length' => 100,
+    'not null' => TRUE,
+    'default' => 'default',
+  ];
+  $schema = Database::getConnection()->schema();
+  $schema->addField('custom_table_view_data', 'table_database', $table_database);
+}
